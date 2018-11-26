@@ -107,4 +107,91 @@ contract('RockPaperScissors', accounts => {
       );
     });
   });
+
+  describe('joinGame function', () => {
+    it('should fail if game hash equals 0', async () => {
+      const value = web3Utils.toWei('0.01', 'ether');
+      const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
+        from: alice
+      });
+      const gameHash = await rps.gameHash(bob, { from: alice });
+
+      await rps.startGame(gameHash, move1Hash, bob, { from: alice, value });
+      await expectedException(() =>
+        rps.joinGame('0x0', MOVE.ROCK, { from: bob, value })
+      );
+    });
+
+    it('should fail if move2 equals NONE', async () => {
+      const value = web3Utils.toWei('0.01', 'ether');
+      const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
+        from: alice
+      });
+      const gameHash = await rps.gameHash(bob, { from: alice });
+
+      await rps.startGame(gameHash, move1Hash, bob, { from: alice, value });
+      await expectedException(() =>
+        rps.joinGame(gameHash, MOVE.NONE, { from: bob, value })
+      );
+    });
+
+    it('should fail if msg.value not equals join game price', async () => {
+      const value = web3Utils.toWei('0.01', 'ether');
+      const otherValue = web3Utils.toWei('0.001', 'ether');
+      const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
+        from: alice
+      });
+      const gameHash = await rps.gameHash(bob, { from: alice });
+
+      await rps.startGame(gameHash, move1Hash, bob, { from: alice, value });
+      await expectedException(() =>
+        rps.joinGame(gameHash, MOVE.ROCK, { from: bob, value: otherValue })
+      );
+    });
+
+    it('should fail if player address is invalid', async () => {
+      const value = web3Utils.toWei('0.01', 'ether');
+      const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
+        from: alice
+      });
+      const gameHash = await rps.gameHash(bob, { from: alice });
+
+      await rps.startGame(gameHash, move1Hash, bob, { from: alice, value });
+      await expectedException(() =>
+        rps.joinGame(gameHash, MOVE.ROCK, { from: carol, value })
+      );
+    });
+
+    it('should fail if move2 not to equals NONE', async () => {
+      const value = web3Utils.toWei('0.01', 'ether');
+      const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
+        from: alice
+      });
+      const gameHash = await rps.gameHash(bob, { from: alice });
+
+      await rps.startGame(gameHash, move1Hash, bob, { from: alice, value });
+      await rps.joinGame(gameHash, MOVE.ROCK, { from: bob, value });
+      await expectedException(() =>
+        rps.joinGame(gameHash, MOVE.ROCK, { from: bob, value })
+      );
+    });
+
+    it('should join the game', async () => {
+      const value = web3Utils.toWei('0.01', 'ether');
+      const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
+        from: alice
+      });
+      const gameHash = await rps.gameHash(bob, { from: alice });
+
+      await rps.startGame(gameHash, move1Hash, bob, { from: alice, value });
+      const tx = await rps.joinGame(gameHash, MOVE.PAPER, { from: bob, value });
+      const log = getTxEvent1stLog(tx);
+
+      expect(log.event).to.equal('LogGameJoined');
+      expect(log.args.player1).to.equal(alice);
+      expect(log.args.player2).to.equal(bob);
+      expect(log.args.gameHash).to.equal(gameHash);
+      expect(log.args.move2.toNumber()).to.equal(MOVE.PAPER);
+    });
+  });
 });

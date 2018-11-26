@@ -21,6 +21,12 @@ contract RockPaperScissors {
         address indexed player2,
         uint256 price
     );
+    event LogGameJoined(
+        address indexed player1,
+        address indexed player2,
+        bytes32 indexed gameHash,
+        uint move2
+    );
 
     function hash(
         address sender,
@@ -80,5 +86,27 @@ contract RockPaperScissors {
             game.move1,
             game.move2
         );
+    }
+
+    function joinGame(
+        bytes32 _gameHash,
+        uint move2
+    ) public payable returns (bool) {
+        require(_gameHash != 0, "Game hash equals 0");
+        require(Move(move2) != Move.NONE, "move2 equals NONE");
+
+        Game storage joinedGame = games[_gameHash];
+        address player1 = joinedGame.player1;
+        address player2 = joinedGame.player2;
+
+        require(msg.value == joinedGame.price, "msg.value not to equals game price");
+        require(player1 != address(0) && player2 == msg.sender, "player address is invalid");
+        require(joinedGame.move2 == Move.NONE, "The game already started");
+
+        joinedGame.move2 = Move(move2);
+
+        emit LogGameJoined(player1, msg.sender, _gameHash, move2);
+
+        return true;
     }
 }
