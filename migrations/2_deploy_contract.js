@@ -1,6 +1,5 @@
-// FIXME: remove comment and update contract.
-// const Contract = artifacts.require('Contract');
+const RockPaperScissors = artifacts.require('RockPaperScissors');
 
-// module.exports = (deployer, network, accounts) =>
-//   deployer.deploy(Contract, { from: accounts[0] });
+module.exports = (deployer, network, accounts) =>
+  deployer.deploy(RockPaperScissors, { from: accounts[0] });
 
