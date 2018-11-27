@@ -27,6 +27,14 @@ contract RockPaperScissors {
         bytes32 indexed gameHash,
         uint move2
     );
+    event LogGameResult(
+        address indexed player1,
+        address indexed player2,
+        bytes32 indexed gameHash,
+        Move move1,
+        Move move2,
+        uint winnerId
+    );
 
     function hash(
         address sender,
@@ -108,5 +116,58 @@ contract RockPaperScissors {
         emit LogGameJoined(player1, msg.sender, _gameHash, move2);
 
         return true;
+    }
+
+    function gameResult(
+        bytes32 _gameHash,
+        uint move1,
+        bytes32 secret1
+    ) public returns (uint winnerId) {
+        require(_gameHash != 0, "Game hash equals 0");
+        require(Move(move1) != Move.NONE, "The move1 equals NONE");
+
+        Game storage game = games[_gameHash];
+        address player1 = game.player1;
+        address player2 = game.player2;
+
+        require(msg.sender == player1, "The msg.sender not equals player1");
+        require(
+            game.move1 == Move.NONE && game.move2 != Move.NONE,
+            "The move is invalid"
+        );
+        require(
+            game.move1Hash == hash(msg.sender, move1, secret1),
+            "The hash result is invalid"
+        );
+
+        game.move1 = Move(move1);
+        winnerId = getWinner(game);
+        emit LogGameResult(
+            player1,
+            player2,
+            _gameHash,
+            game.move1,
+            game.move2,
+            winnerId
+        );
+
+        return winnerId;
+    }
+
+    function getWinner(Game storage game) private view returns (uint) {
+        Move move1 = game.move1;
+        Move move2 = game.move2;
+
+        if (move1 == move2) {
+            return 0;
+        }
+        if (move1 == Move.ROCK && move2 == Move.SCISSORS) {
+            return 1;
+        }
+        if (move1 == Move.SCISSORS && move2 == Move.ROCK) {
+            return 2;
+        }
+
+        return move1 > move2 ? 1 : 2;
     }
 }

@@ -194,4 +194,163 @@ contract('RockPaperScissors', accounts => {
       expect(log.args.move2.toNumber()).to.equal(MOVE.PAPER);
     });
   });
+
+  describe('gameResult function', () => {
+    it('should fail if game hash equals 0', async () => {
+      const value = web3Utils.toWei('0.01', 'ether');
+      const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
+        from: alice
+      });
+      const gameHash = await rps.gameHash(bob, { from: alice });
+
+      await rps.startGame(gameHash, move1Hash, bob, { from: alice, value });
+      await rps.joinGame(gameHash, MOVE.ROCK, { from: bob, value });
+      await expectedException(() =>
+        rps.gameResult('0x0', MOVE.ROCK, aliceSecret, { from: alice })
+      );
+    });
+
+    it('should fail if move1 equals NONE', async () => {
+      const value = web3Utils.toWei('0.01', 'ether');
+      const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
+        from: alice
+      });
+      const gameHash = await rps.gameHash(bob, { from: alice });
+
+      await rps.startGame(gameHash, move1Hash, bob, { from: alice, value });
+      await rps.joinGame(gameHash, MOVE.ROCK, { from: bob, value });
+      await expectedException(() =>
+        rps.gameResult(gameHash, MOVE.NONE, aliceSecret, { from: alice })
+      );
+    });
+
+    it('should fail if msg.sender not equals player1', async () => {
+      const value = web3Utils.toWei('0.01', 'ether');
+      const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
+        from: alice
+      });
+      const gameHash = await rps.gameHash(bob, { from: alice });
+
+      await rps.startGame(gameHash, move1Hash, bob, { from: alice, value });
+      await rps.joinGame(gameHash, MOVE.ROCK, { from: bob, value });
+      await expectedException(() =>
+        rps.gameResult(gameHash, MOVE.NONE, aliceSecret, { from: bob })
+      );
+    });
+
+    it('should fail if move is invalid', async () => {
+      const value = web3Utils.toWei('0.01', 'ether');
+      const gameHash = await rps.gameHash(bob, { from: alice });
+      const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
+        from: alice
+      });
+
+      await rps.startGame(gameHash, move1Hash, bob, { from: alice, value });
+      await expectedException(() =>
+        rps.gameResult(gameHash, MOVE.ROCK, aliceSecret, { from: alice })
+      );
+    });
+
+    it('should fail if move1Hash is invalid', async () => {
+      const value = web3Utils.toWei('0.01', 'ether');
+      const gameHash = await rps.gameHash(bob, { from: alice });
+      const move1Hash = await rps.hash(alice, MOVE.PAPER, aliceSecret, {
+        from: alice
+      });
+
+      await rps.startGame(gameHash, move1Hash, bob, { from: alice, value });
+      await rps.joinGame(gameHash, MOVE.ROCK, { from: bob, value });
+      await expectedException(() =>
+        rps.gameResult(gameHash, MOVE.ROCK, aliceSecret, { from: alice })
+      );
+    });
+
+    it('should get winner id is 1 (ROCK vs SCISSORS)', async () => {
+      const value = web3Utils.toWei('0.01', 'ether');
+      const gameHash = await rps.gameHash(bob, { from: alice });
+      const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
+        from: alice
+      });
+
+      await rps.startGame(gameHash, move1Hash, bob, { from: alice, value });
+      await rps.joinGame(gameHash, MOVE.SCISSORS, { from: bob, value });
+      const tx = await rps.gameResult(gameHash, MOVE.ROCK, aliceSecret, {
+        from: alice
+      });
+      const log = getTxEvent1stLog(tx);
+
+      expect(log.event).to.equal('LogGameResult');
+      expect(log.args.player1).to.equal(alice);
+      expect(log.args.player2).to.equal(bob);
+      expect(log.args.move1.toNumber()).to.equal(MOVE.ROCK);
+      expect(log.args.move2.toNumber()).to.equal(MOVE.SCISSORS);
+      expect(log.args.winnerId.toNumber()).to.equal(1);
+    });
+
+    it('should get winner id is 2 (SCISSORS vs ROCK)', async () => {
+      const value = web3Utils.toWei('0.01', 'ether');
+      const gameHash = await rps.gameHash(bob, { from: alice });
+      const move1Hash = await rps.hash(alice, MOVE.SCISSORS, aliceSecret, {
+        from: alice
+      });
+
+      await rps.startGame(gameHash, move1Hash, bob, { from: alice, value });
+      await rps.joinGame(gameHash, MOVE.ROCK, { from: bob, value });
+      const tx = await rps.gameResult(gameHash, MOVE.SCISSORS, aliceSecret, {
+        from: alice
+      });
+      const log = getTxEvent1stLog(tx);
+
+      expect(log.event).to.equal('LogGameResult');
+      expect(log.args.player1).to.equal(alice);
+      expect(log.args.player2).to.equal(bob);
+      expect(log.args.move1.toNumber()).to.equal(MOVE.SCISSORS);
+      expect(log.args.move2.toNumber()).to.equal(MOVE.ROCK);
+      expect(log.args.winnerId.toNumber()).to.equal(2);
+    });
+
+    it('should end in a tie', async () => {
+      const value = web3Utils.toWei('0.01', 'ether');
+      const gameHash = await rps.gameHash(bob, { from: alice });
+      const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
+        from: alice
+      });
+
+      await rps.startGame(gameHash, move1Hash, bob, { from: alice, value });
+      await rps.joinGame(gameHash, MOVE.ROCK, { from: bob, value });
+      const tx = await rps.gameResult(gameHash, MOVE.ROCK, aliceSecret, {
+        from: alice
+      });
+      const log = getTxEvent1stLog(tx);
+
+      expect(log.event).to.equal('LogGameResult');
+      expect(log.args.player1).to.equal(alice);
+      expect(log.args.player2).to.equal(bob);
+      expect(log.args.move1.toNumber()).to.equal(MOVE.ROCK);
+      expect(log.args.move2.toNumber()).to.equal(MOVE.ROCK);
+      expect(log.args.winnerId.toNumber()).to.equal(0);
+    });
+
+    it('should get winner id is 1 (PAPER vs ROCK)', async () => {
+      const value = web3Utils.toWei('0.01', 'ether');
+      const gameHash = await rps.gameHash(bob, { from: alice });
+      const move1Hash = await rps.hash(alice, MOVE.PAPER, aliceSecret, {
+        from: alice
+      });
+
+      await rps.startGame(gameHash, move1Hash, bob, { from: alice, value });
+      await rps.joinGame(gameHash, MOVE.ROCK, { from: bob, value });
+      const tx = await rps.gameResult(gameHash, MOVE.PAPER, aliceSecret, {
+        from: alice
+      });
+      const log = getTxEvent1stLog(tx);
+
+      expect(log.event).to.equal('LogGameResult');
+      expect(log.args.player1).to.equal(alice);
+      expect(log.args.player2).to.equal(bob);
+      expect(log.args.move1.toNumber()).to.equal(MOVE.PAPER);
+      expect(log.args.move2.toNumber()).to.equal(MOVE.ROCK);
+      expect(log.args.winnerId.toNumber()).to.equal(1);
+    });
+  });
 });
