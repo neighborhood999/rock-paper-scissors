@@ -35,6 +35,7 @@ contract RockPaperScissors {
         Move move2,
         uint winnerId
     );
+    event LogWithdraw(address indexed from, uint256 amount);
 
     function hash(
         address sender,
@@ -142,6 +143,8 @@ contract RockPaperScissors {
 
         game.move1 = Move(move1);
         winnerId = getWinner(game);
+        reward(game, winnerId);
+
         emit LogGameResult(
             player1,
             player2,
@@ -169,5 +172,35 @@ contract RockPaperScissors {
         }
 
         return move1 > move2 ? 1 : 2;
+    }
+
+    function reward(Game storage game, uint winner) private {
+        address player1 = game.player1;
+        address player2 = game.player2;
+        uint256 price = game.price;
+
+        if (winner == 0) {
+            balances[player1] = balances[player1] + price;
+            balances[player2] = balances[player2] + price;
+        }
+
+        if (winner == 1) {
+            balances[player1] = balances[player1] + (price * 2);
+        }
+
+        if (winner == 2) {
+            balances[player2] = balances[player2] + (price * 2);
+        }
+    }
+
+    function withdraw() public returns (bool) {
+        uint256 amount = balances[msg.sender];
+        require(amount > 0, "Nothing to withdraw, amount equals 0");
+
+        balances[msg.sender] = 0;
+        emit LogWithdraw(msg.sender, amount);
+        msg.sender.transfer(amount);
+
+        return true;
     }
 }
