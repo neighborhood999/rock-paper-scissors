@@ -353,4 +353,86 @@ contract('RockPaperScissors', accounts => {
       expect(log.args.winnerId.toNumber()).to.equal(1);
     });
   });
+
+  describe('withdraw function', () => {
+    it('should fail if alice balances is zero', async () => {
+      const value = web3Utils.toWei('0.01', 'ether');
+      const gameHash = await rps.gameHash(bob, { from: alice });
+      const move1Hash = await rps.hash(alice, MOVE.SCISSORS, aliceSecret, {
+        from: alice
+      });
+
+      await rps.startGame(gameHash, move1Hash, bob, { from: alice, value });
+      await rps.joinGame(gameHash, MOVE.ROCK, { from: bob, value });
+      await rps.gameResult(gameHash, MOVE.SCISSORS, aliceSecret, {
+        from: alice
+      });
+      await expectedException(() => rps.withdraw({ from: alice }));
+    });
+
+    it('should withdraw 0.02 ether by alice', async () => {
+      const value = web3Utils.toWei('0.01', 'ether');
+      const gameHash = await rps.gameHash(bob, { from: alice });
+      const move1Hash = await rps.hash(alice, MOVE.PAPER, aliceSecret, {
+        from: alice
+      });
+
+      await rps.startGame(gameHash, move1Hash, bob, { from: alice, value });
+      await rps.joinGame(gameHash, MOVE.ROCK, { from: bob, value });
+      const tx = await rps.gameResult(gameHash, MOVE.PAPER, aliceSecret, {
+        from: alice
+      });
+      const log = getTxEvent1stLog(tx);
+
+      expect(log.event).to.equal('LogGameResult');
+      expect(log.args.player1).to.equal(alice);
+      expect(log.args.player2).to.equal(bob);
+      expect(log.args.gameHash).to.equal(gameHash);
+      expect(log.args.winnerId.toNumber()).to.equal(1);
+
+      const aliceBalance = await rps.balances(alice);
+      const expectValue = web3Utils.toWei('0.02', 'ether')
+      expect(aliceBalance.toString(10)).to.equal(expectValue.toString(10));
+
+      await rps.withdraw({ from: alice });
+      const afterAliceWithdraw = await rps.balances(alice);
+      expect(afterAliceWithdraw.toNumber()).to.equal(0);
+    });
+
+    it('should end in a tie', async () => {
+      const value = web3Utils.toWei('0.01', 'ether');
+      const gameHash = await rps.gameHash(bob, { from: alice });
+      const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
+        from: alice
+      });
+
+      await rps.startGame(gameHash, move1Hash, bob, { from: alice, value });
+      await rps.joinGame(gameHash, MOVE.ROCK, { from: bob, value });
+      const tx = await rps.gameResult(gameHash, MOVE.ROCK, aliceSecret, {
+        from: alice
+      });
+      const log = getTxEvent1stLog(tx);
+
+      expect(log.event).to.equal('LogGameResult');
+      expect(log.args.player1).to.equal(alice);
+      expect(log.args.player2).to.equal(bob);
+      expect(log.args.gameHash).to.equal(gameHash);
+      expect(log.args.winnerId.toNumber()).to.equal(0);
+
+      const aliceBalance = await rps.balances(alice);
+      const bobBalance = await rps.balances(bob);
+
+      expect(aliceBalance.toString(10)).to.equal(value.toString(10));
+      expect(bobBalance.toString(10)).to.equal(value.toString(10));
+
+      await rps.withdraw({ from: alice });
+      await rps.withdraw({ from: bob });
+
+      const aliceAfterWithdraw = await rps.balances(alice);
+      const bobAfterWithdraw = await rps.balances(bob);
+
+      expect(aliceAfterWithdraw.toNumber()).to.equal(0);
+      expect(bobAfterWithdraw.toNumber()).to.equal(0);
+    });
+  });
 });

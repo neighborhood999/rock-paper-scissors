@@ -35,7 +35,7 @@ contract RockPaperScissors {
         Move move2,
         uint winnerId
     );
-    event LogWithdraw(address indexed from, uint256 amount);
+    event LogWithdraw(address indexed player, uint256 amount);
 
     function hash(
         address sender,
