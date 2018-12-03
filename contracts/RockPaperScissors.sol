@@ -45,8 +45,8 @@ contract RockPaperScissors {
         return keccak256(abi.encodePacked(this, sender, move, secret));
     }
 
-    function gameHash(address palyer2) public view returns(bytes32) {
-        return keccak256(abi.encodePacked(msg.sender, palyer2));
+    function gameHash(address player2) public view returns(bytes32) {
+        return keccak256(abi.encodePacked(msg.sender, player2));
     }
 
     function startGame(
