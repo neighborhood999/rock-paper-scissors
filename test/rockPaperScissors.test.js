@@ -40,7 +40,7 @@ contract('RockPaperScissors', accounts => {
 
     it('should fail if the move1 hash equals 0', async () => {
       const value = web3Utils.toWei('0.01', 'ether');
-      const gameHash = await rps.gameHash(bob, { from: alice });
+      const gameHash = await web3Utils.sha3('game_hash');
 
       await expectedException(() =>
         rps.startGame(gameHash, '0x0', bob, { from: alice, value })
@@ -52,7 +52,7 @@ contract('RockPaperScissors', accounts => {
       const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
         from: alice
       });
-      const gameHash = await rps.gameHash(bob, { from: alice });
+      const gameHash = await web3Utils.sha3('game_hash');
 
       await expectedException(() =>
         rps.startGame(gameHash, move1Hash, '0x0', { from: alice, value })
@@ -64,7 +64,7 @@ contract('RockPaperScissors', accounts => {
       const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
         from: alice
       });
-      const gameHash = await rps.gameHash(bob, { from: alice });
+      const gameHash = await web3Utils.sha3('game_hash');
 
       await expectedException(() =>
         rps.startGame(gameHash, move1Hash, '0x0', { from: alice, value })
@@ -76,7 +76,7 @@ contract('RockPaperScissors', accounts => {
       const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
         from: alice
       });
-      const gameHash = await rps.gameHash(bob, { from: alice });
+      const gameHash = await web3Utils.sha3('game_hash');
       const tx = await rps.startGame(gameHash, move1Hash, bob, { from: alice, value });
 
       const log = getTxEvent1stLog(tx);
@@ -84,14 +84,6 @@ contract('RockPaperScissors', accounts => {
       expect(log.args.player1).to.equal(alice);
       expect(log.args.player2).to.equal(bob);
       expect(log.args.price.toString(10)).to.equal(value.toString(10));
-
-      const game = await rps.getGame(gameHash);
-      expect(game[0].toString(10)).to.equal(value.toString(10));
-      expect(game[1]).to.equal(alice);
-      expect(game[2]).to.equal(bob);
-      expect(game[3]).to.equal(move1Hash);
-      expect(game[4].toNumber()).to.equal(MOVE.NONE);
-      expect(game[5].toNumber()).to.equal(MOVE.NONE);
     });
 
     it('should fail if the game already started', async () => {
@@ -99,7 +91,7 @@ contract('RockPaperScissors', accounts => {
       const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
         from: alice
       });
-      const gameHash = await rps.gameHash(bob, { from: alice });
+      const gameHash = await web3Utils.sha3('game_hash');
 
       await rps.startGame(gameHash, move1Hash, bob, { from: alice, value })
       await expectedException(() =>
@@ -109,25 +101,12 @@ contract('RockPaperScissors', accounts => {
   });
 
   describe('joinGame function', () => {
-    it('should fail if game hash equals 0', async () => {
-      const value = web3Utils.toWei('0.01', 'ether');
-      const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
-        from: alice
-      });
-      const gameHash = await rps.gameHash(bob, { from: alice });
-
-      await rps.startGame(gameHash, move1Hash, bob, { from: alice, value });
-      await expectedException(() =>
-        rps.joinGame('0x0', MOVE.ROCK, { from: bob, value })
-      );
-    });
-
     it('should fail if move2 equals NONE', async () => {
       const value = web3Utils.toWei('0.01', 'ether');
       const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
         from: alice
       });
-      const gameHash = await rps.gameHash(bob, { from: alice });
+      const gameHash = await web3Utils.sha3('game_hash');
 
       await rps.startGame(gameHash, move1Hash, bob, { from: alice, value });
       await expectedException(() =>
@@ -141,7 +120,7 @@ contract('RockPaperScissors', accounts => {
       const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
         from: alice
       });
-      const gameHash = await rps.gameHash(bob, { from: alice });
+      const gameHash = await web3Utils.sha3('game_hash');
 
       await rps.startGame(gameHash, move1Hash, bob, { from: alice, value });
       await expectedException(() =>
@@ -154,7 +133,7 @@ contract('RockPaperScissors', accounts => {
       const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
         from: alice
       });
-      const gameHash = await rps.gameHash(bob, { from: alice });
+      const gameHash = await web3Utils.sha3('game_hash');
 
       await rps.startGame(gameHash, move1Hash, bob, { from: alice, value });
       await expectedException(() =>
@@ -167,7 +146,7 @@ contract('RockPaperScissors', accounts => {
       const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
         from: alice
       });
-      const gameHash = await rps.gameHash(bob, { from: alice });
+      const gameHash = await web3Utils.sha3('game_hash');
 
       await rps.startGame(gameHash, move1Hash, bob, { from: alice, value });
       await rps.joinGame(gameHash, MOVE.ROCK, { from: bob, value });
@@ -181,7 +160,7 @@ contract('RockPaperScissors', accounts => {
       const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
         from: alice
       });
-      const gameHash = await rps.gameHash(bob, { from: alice });
+      const gameHash = await web3Utils.sha3('game_hash');
 
       await rps.startGame(gameHash, move1Hash, bob, { from: alice, value });
       const tx = await rps.joinGame(gameHash, MOVE.PAPER, { from: bob, value });
@@ -201,7 +180,7 @@ contract('RockPaperScissors', accounts => {
       const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
         from: alice
       });
-      const gameHash = await rps.gameHash(bob, { from: alice });
+      const gameHash = await web3Utils.sha3('game_hash');
 
       await rps.startGame(gameHash, move1Hash, bob, { from: alice, value });
       await rps.joinGame(gameHash, MOVE.ROCK, { from: bob, value });
@@ -215,7 +194,7 @@ contract('RockPaperScissors', accounts => {
       const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
         from: alice
       });
-      const gameHash = await rps.gameHash(bob, { from: alice });
+      const gameHash = await web3Utils.sha3('game_hash');
 
       await rps.startGame(gameHash, move1Hash, bob, { from: alice, value });
       await rps.joinGame(gameHash, MOVE.ROCK, { from: bob, value });
@@ -224,23 +203,10 @@ contract('RockPaperScissors', accounts => {
       );
     });
 
-    it('should fail if msg.sender not equals player1', async () => {
-      const value = web3Utils.toWei('0.01', 'ether');
-      const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
-        from: alice
-      });
-      const gameHash = await rps.gameHash(bob, { from: alice });
-
-      await rps.startGame(gameHash, move1Hash, bob, { from: alice, value });
-      await rps.joinGame(gameHash, MOVE.ROCK, { from: bob, value });
-      await expectedException(() =>
-        rps.gameResult(gameHash, MOVE.NONE, aliceSecret, { from: bob })
-      );
-    });
 
     it('should fail if move is invalid', async () => {
       const value = web3Utils.toWei('0.01', 'ether');
-      const gameHash = await rps.gameHash(bob, { from: alice });
+      const gameHash = await web3Utils.sha3('game_hash');
       const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
         from: alice
       });
@@ -253,7 +219,7 @@ contract('RockPaperScissors', accounts => {
 
     it('should fail if move1Hash is invalid', async () => {
       const value = web3Utils.toWei('0.01', 'ether');
-      const gameHash = await rps.gameHash(bob, { from: alice });
+      const gameHash = await web3Utils.sha3('game_hash');
       const move1Hash = await rps.hash(alice, MOVE.PAPER, aliceSecret, {
         from: alice
       });
@@ -267,7 +233,7 @@ contract('RockPaperScissors', accounts => {
 
     it('should get winner id is 1 (ROCK vs SCISSORS)', async () => {
       const value = web3Utils.toWei('0.01', 'ether');
-      const gameHash = await rps.gameHash(bob, { from: alice });
+      const gameHash = await web3Utils.sha3('game_hash');
       const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
         from: alice
       });
@@ -289,7 +255,7 @@ contract('RockPaperScissors', accounts => {
 
     it('should get winner id is 2 (SCISSORS vs ROCK)', async () => {
       const value = web3Utils.toWei('0.01', 'ether');
-      const gameHash = await rps.gameHash(bob, { from: alice });
+      const gameHash = await web3Utils.sha3('game_hash');
       const move1Hash = await rps.hash(alice, MOVE.SCISSORS, aliceSecret, {
         from: alice
       });
@@ -311,7 +277,7 @@ contract('RockPaperScissors', accounts => {
 
     it('should end in a tie', async () => {
       const value = web3Utils.toWei('0.01', 'ether');
-      const gameHash = await rps.gameHash(bob, { from: alice });
+      const gameHash = await web3Utils.sha3('game_hash');
       const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
         from: alice
       });
@@ -333,7 +299,7 @@ contract('RockPaperScissors', accounts => {
 
     it('should get winner id is 1 (PAPER vs ROCK)', async () => {
       const value = web3Utils.toWei('0.01', 'ether');
-      const gameHash = await rps.gameHash(bob, { from: alice });
+      const gameHash = await web3Utils.sha3('game_hash');
       const move1Hash = await rps.hash(alice, MOVE.PAPER, aliceSecret, {
         from: alice
       });
@@ -357,7 +323,7 @@ contract('RockPaperScissors', accounts => {
   describe('withdraw function', () => {
     it('should fail if alice balances is zero', async () => {
       const value = web3Utils.toWei('0.01', 'ether');
-      const gameHash = await rps.gameHash(bob, { from: alice });
+      const gameHash = await web3Utils.sha3('game_hash');
       const move1Hash = await rps.hash(alice, MOVE.SCISSORS, aliceSecret, {
         from: alice
       });
@@ -372,7 +338,7 @@ contract('RockPaperScissors', accounts => {
 
     it('should withdraw 0.02 ether by alice', async () => {
       const value = web3Utils.toWei('0.01', 'ether');
-      const gameHash = await rps.gameHash(bob, { from: alice });
+      const gameHash = await web3Utils.sha3('game_hash');
       const move1Hash = await rps.hash(alice, MOVE.PAPER, aliceSecret, {
         from: alice
       });
@@ -401,7 +367,7 @@ contract('RockPaperScissors', accounts => {
 
     it('should end in a tie', async () => {
       const value = web3Utils.toWei('0.01', 'ether');
-      const gameHash = await rps.gameHash(bob, { from: alice });
+      const gameHash = await web3Utils.sha3('game_hash');
       const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
         from: alice
       });
