@@ -10,6 +10,7 @@ contract RockPaperScissors {
         bytes32 move1Hash;
         Move move1;
         Move move2;
+        uint timeoutBlock;
     }
 
     mapping(address => uint256) public balances;
@@ -19,7 +20,8 @@ contract RockPaperScissors {
         bytes32 indexed gameHash,
         address indexed player1,
         address indexed player2,
-        uint256 price
+        uint256 price,
+        uint timeoutBlock
     );
     event LogGameJoined(
         address indexed player1,
@@ -48,11 +50,13 @@ contract RockPaperScissors {
     function startGame(
         bytes32 _gameHash,
         bytes32 move1Hash,
-        address player2
+        address player2,
+        uint gameTimeout
     ) public payable returns (bool) {
         require(_gameHash != 0, "Game hash equals 0");
         require(move1Hash != 0, "Move 1 hash equals 0");
         require(player2 != address(0), "Player2 address equals 0");
+        require(gameTimeout != 0, "Game timeout equals 0");
         require(msg.value != 0, "msg.value equals 0");
 
         Game storage newGame = games[_gameHash];
@@ -61,12 +65,21 @@ contract RockPaperScissors {
             "The game already started"
         );
 
+        uint timeoutBlock = block.number + gameTimeout;
+
         newGame.price = msg.value;
         newGame.move1Hash = move1Hash;
         newGame.player1 = msg.sender;
         newGame.player2 = player2;
+        newGame.timeoutBlock = timeoutBlock;
 
-        emit LogGameCreated(_gameHash, msg.sender, player2, msg.value);
+        emit LogGameCreated(
+            _gameHash,
+            msg.sender,
+            player2,
+            msg.value,
+            timeoutBlock
+        );
 
         return true;
     }
