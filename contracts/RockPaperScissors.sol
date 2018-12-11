@@ -38,6 +38,7 @@ contract RockPaperScissors {
         uint winnerId
     );
     event LogWithdraw(address indexed player, uint256 amount);
+    event LogRefundGame(address indexed player, uint256 amount);
 
     function hash(
         address sender,
@@ -88,9 +89,15 @@ contract RockPaperScissors {
         bytes32 _gameHash,
         uint move2
     ) public payable returns (bool) {
+        require(_gameHash != 0, "Game hash equals 0");
         require(Move(move2) != Move.NONE, "move2 equals NONE");
 
         Game storage joinedGame = games[_gameHash];
+        if (block.number > games[_gameHash].timeoutBlock) {
+            refundGame(joinedGame);
+            return true;
+        }
+
         address player1 = joinedGame.player1;
         address player2 = joinedGame.player2;
 
@@ -109,11 +116,16 @@ contract RockPaperScissors {
         bytes32 _gameHash,
         uint move1,
         bytes32 secret1
-    ) public returns (uint winnerId) {
+    ) public returns (bool) {
         require(_gameHash != 0, "Game hash equals 0");
         require(Move(move1) != Move.NONE, "The move1 equals NONE");
 
         Game storage game = games[_gameHash];
+        if (block.number > games[_gameHash].timeoutBlock) {
+            refundGame(game);
+            return true;
+        }
+
         address player1 = game.player1;
         address player2 = game.player2;
 
@@ -127,7 +139,7 @@ contract RockPaperScissors {
         );
 
         game.move1 = Move(move1);
-        winnerId = getWinner(game);
+        uint winnerId = getWinner(game);
         reward(game, winnerId);
 
         emit LogGameResult(
@@ -139,7 +151,7 @@ contract RockPaperScissors {
             winnerId
         );
 
-        return winnerId;
+        return true;
     }
 
     function getWinner(Game storage game) private view returns (uint) {
@@ -176,6 +188,24 @@ contract RockPaperScissors {
         if (winner == 2) {
             balances[player2] = balances[player2] + (price * 2);
         }
+    }
+
+    function refundGame(Game storage game) private returns (bool) {
+        address player1 = game.player1;
+        address player2 = game.player2;
+        uint player1Amount = balances[player1];
+        uint player2Amount = balances[player2];
+
+        balances[player1] = 0;
+        balances[player2] = 0;
+
+        emit LogRefundGame(player1, player1Amount);
+        emit LogRefundGame(player2, player2Amount);
+
+        player1.transfer(player1Amount);
+        player2.transfer(player2Amount);
+
+        return true;
     }
 
     function withdraw() public returns (bool) {
