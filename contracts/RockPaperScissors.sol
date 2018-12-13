@@ -60,10 +60,8 @@ contract RockPaperScissors {
         require(msg.value != 0, "msg.value equals 0");
 
         Game storage newGame = games[_gameHash];
-        require(
-            newGame.player1 == 0 && newGame.player2 == 0,
-            "The game already started"
-        );
+        require(newGame.player1 == address(0), "The game already started");
+        require(newGame.player2 == address(0), "The game already started");
 
         uint timeoutBlock = block.number + gameTimeout;
 
@@ -96,7 +94,8 @@ contract RockPaperScissors {
         address player2 = joinedGame.player2;
 
         require(msg.value == joinedGame.price, "msg.value not to equals game price");
-        require(player1 != address(0) && player2 == msg.sender, "player address is invalid");
+        require(player1 != address(0), "player1 address is invalid");
+        require(player2 == msg.sender, "player2 is not the sender");
         require(joinedGame.move2 == Move.NONE, "The player2 already joined");
 
         joinedGame.move2 = Move(move2);
@@ -169,14 +168,14 @@ contract RockPaperScissors {
         if (winner == 0) {
             balances[player1] = balances[player1] + price;
             balances[player2] = balances[player2] + price;
-        }
-
-        if (winner == 1) {
+        } else if (winner == 1) {
             balances[player1] = balances[player1] + (price * 2);
-        }
-
-        if (winner == 2) {
+            balances[player2] = 0;
+        } else if (winner == 2) {
             balances[player2] = balances[player2] + (price * 2);
+            balances[player1] = 0;
+        } else {
+            revert("winner id is invalid");
         }
     }
 
