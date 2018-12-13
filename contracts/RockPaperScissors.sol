@@ -53,15 +53,15 @@ contract RockPaperScissors {
         address player2,
         uint gameTimeout
     ) public payable returns (bool) {
-        require(_gameHash != 0, "Game hash equals 0");
-        require(move1Hash != 0, "Move 1 hash equals 0");
-        require(player2 != address(0), "Player2 address equals 0");
-        require(gameTimeout != 0, "Game timeout equals 0");
-        require(msg.value != 0, "msg.value equals 0");
+        require(_gameHash != 0, "Game hash is required");
+        require(move1Hash != 0, "Move 1 hash is required");
+        require(player2 != address(0), "Player2 address is required");
+        require(gameTimeout != 0, "Game timeout is required");
+        require(msg.value != 0, "msg.value is required");
 
         Game storage newGame = games[_gameHash];
-        require(newGame.player1 == address(0), "The game already started");
-        require(newGame.player2 == address(0), "The game already started");
+        require(newGame.player1 == address(0), "The player1 address required as 0");
+        require(newGame.player2 == address(0), "The player2 address required as 0");
 
         uint timeoutBlock = block.number + gameTimeout;
 
@@ -86,17 +86,17 @@ contract RockPaperScissors {
         bytes32 _gameHash,
         uint move2
     ) public payable returns (bool) {
-        require(Move(move2) != Move.NONE, "move2 equals NONE");
-        require(!timeoutExpired(_gameHash), "The game is not over");
+        require(Move(move2) != Move.NONE, "move2 is required");
+        require(!timeoutExpired(_gameHash), "The game is required not expired");
 
         Game storage joinedGame = games[_gameHash];
         address player1 = joinedGame.player1;
         address player2 = joinedGame.player2;
 
-        require(msg.value == joinedGame.price, "msg.value not to equals game price");
-        require(player1 != address(0), "player1 address is invalid");
-        require(player2 == msg.sender, "player2 is not the sender");
-        require(joinedGame.move2 == Move.NONE, "The player2 already joined");
+        require(msg.value == joinedGame.price, "msg.value is required equal to game price");
+        require(player1 != address(0), "player1 address is required");
+        require(player2 == msg.sender, "player2 should equal to sender");
+        require(joinedGame.move2 == Move.NONE, "The player2 move should equal to NONE");
 
         joinedGame.move2 = Move(move2);
 
@@ -110,9 +110,9 @@ contract RockPaperScissors {
         uint move1,
         bytes32 secret1
     ) public returns (uint winnerId) {
-        require(_gameHash != 0, "Game hash equals 0");
-        require(Move(move1) != Move.NONE, "The move1 equals NONE");
-        require(!timeoutExpired(_gameHash), "The game is not over");
+        require(_gameHash != 0, "The game hash is required");
+        require(Move(move1) != Move.NONE, "The move1 is required");
+        require(!timeoutExpired(_gameHash), "The game is required not expired");
 
         Game storage game = games[_gameHash];
         address player1 = game.player1;
@@ -124,7 +124,7 @@ contract RockPaperScissors {
         );
         require(
             game.move1Hash == hash(msg.sender, move1, secret1),
-            "The hash result is invalid"
+            "The move1Hash requied equal to hash result"
         );
 
         game.move1 = Move(move1);
@@ -184,8 +184,8 @@ contract RockPaperScissors {
     }
 
     function claimRefund(bytes32 _gameHash) public returns (uint winnerId) {
-        require(_gameHash != 0, "Game hash equals 0");
-        require(timeoutExpired(_gameHash), "The game has expired");
+        require(_gameHash != 0, "The game hash is required");
+        require(timeoutExpired(_gameHash), "The game deadline should be expired");
 
         Game storage game = games[_gameHash];
         address player1 = game.player1;
@@ -193,11 +193,11 @@ contract RockPaperScissors {
 
         require(
             player1 != address(0) && player2 != address(0),
-            "player address is invalid"
+            "player address is required"
         );
         require(
             game.move1 != Move.NONE && game.move2 != Move.NONE,
-            "The move is invalid"
+            "The move is required"
         );
 
         winnerId = getWinner(game);
