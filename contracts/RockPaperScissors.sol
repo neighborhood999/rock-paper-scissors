@@ -87,7 +87,7 @@ contract RockPaperScissors {
         uint move2
     ) public payable returns (bool) {
         require(Move(move2) != Move.NONE, "move2 equals NONE");
-        require(!isGameOver(_gameHash), "The game is not over");
+        require(!timeoutExpired(_gameHash), "The game is not over");
 
         Game storage joinedGame = games[_gameHash];
         address player1 = joinedGame.player1;
@@ -112,7 +112,7 @@ contract RockPaperScissors {
     ) public returns (uint winnerId) {
         require(_gameHash != 0, "Game hash equals 0");
         require(Move(move1) != Move.NONE, "The move1 equals NONE");
-        require(!isGameOver(_gameHash), "The game is not over");
+        require(!timeoutExpired(_gameHash), "The game is not over");
 
         Game storage game = games[_gameHash];
         address player1 = game.player1;
@@ -179,20 +179,13 @@ contract RockPaperScissors {
         }
     }
 
-    function isGameOver(bytes32 _gameHash) public view returns (bool) {
-        Game memory game = games[_gameHash];
-        bool bothMoveRevealed = game.move1 != Move.NONE && game.move2 != Move.NONE;
-
-        return bothMoveRevealed || timeoutExpired(_gameHash);
-    }
-
     function timeoutExpired(bytes32 _gameHash) public view returns (bool) {
         return block.number > games[_gameHash].timeoutBlock;
     }
 
     function claimRefund(bytes32 _gameHash) public returns (uint winnerId) {
         require(_gameHash != 0, "Game hash equals 0");
-        require(isGameOver(_gameHash), "The game is over");
+        require(timeoutExpired(_gameHash), "The game has expired");
 
         Game storage game = games[_gameHash];
         address player1 = game.player1;
@@ -201,6 +194,10 @@ contract RockPaperScissors {
         require(
             player1 != address(0) && player2 != address(0),
             "player address is invalid"
+        );
+        require(
+            game.move1 != Move.NONE && game.move2 != Move.NONE,
+            "The move is invalid"
         );
 
         winnerId = getWinner(game);
