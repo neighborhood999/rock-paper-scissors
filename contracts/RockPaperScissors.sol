@@ -195,10 +195,6 @@ contract RockPaperScissors {
             player1 != address(0) && player2 != address(0),
             "player address is required"
         );
-        require(
-            game.move1 != Move.NONE && game.move2 != Move.NONE,
-            "The move is required"
-        );
 
         winnerId = getWinner(game);
         reward(game, winnerId);
