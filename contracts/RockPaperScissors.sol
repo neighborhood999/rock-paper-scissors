@@ -57,11 +57,11 @@ contract RockPaperScissors {
         require(move1Hash != 0, "Move 1 hash is required");
         require(player2 != address(0), "Player2 address is required");
         require(gameTimeout != 0, "Game timeout is required");
-        require(msg.value != 0, "msg.value is required");
+        require(msg.value != 0, "Game cannot be played for free");
 
         Game storage newGame = games[_gameHash];
-        require(newGame.player1 == address(0), "The player1 address required as 0");
-        require(newGame.player2 == address(0), "The player2 address required as 0");
+        require(newGame.player1 == address(0), "You can't overwrite a running game");
+        require(newGame.player2 == address(0), "You can't overwrite a running game");
 
         uint timeoutBlock = block.number + gameTimeout;
 
@@ -95,8 +95,8 @@ contract RockPaperScissors {
 
         require(msg.value == joinedGame.price, "msg.value is required equal to game price");
         require(player1 != address(0), "player1 address is required");
-        require(player2 == msg.sender, "player2 should equal to sender");
-        require(joinedGame.move2 == Move.NONE, "The player2 move should equal to NONE");
+        require(player2 == msg.sender, "player2 should be equal to sender");
+        require(joinedGame.move2 == Move.NONE, "The player2 move should be equal to NONE");
 
         joinedGame.move2 = Move(move2);
 
