@@ -8,9 +8,10 @@ contract RockPaperScissors {
         address player1;
         address player2;
         bytes32 move1Hash;
+        uint player1Deadline;
+        uint player2Deadline;
         Move move1;
         Move move2;
-        uint timeoutBlock;
     }
 
     mapping(address => uint256) public balances;
@@ -21,7 +22,8 @@ contract RockPaperScissors {
         address indexed player1,
         address indexed player2,
         uint256 price,
-        uint timeoutBlock
+        uint player1Deadline,
+        uint player2Deadline
     );
     event LogGameJoined(
         address indexed player1,
@@ -51,32 +53,36 @@ contract RockPaperScissors {
         bytes32 _gameHash,
         bytes32 move1Hash,
         address player2,
-        uint gameTimeout
+        uint player1MaxBlock,
+        uint player2MaxBlock
     ) public payable returns (bool) {
         require(_gameHash != 0, "Game hash is required");
         require(move1Hash != 0, "Move 1 hash is required");
         require(player2 != address(0), "Player2 address is required");
-        require(gameTimeout != 0, "Game timeout is required");
         require(msg.value != 0, "Game cannot be played for free");
 
         Game storage newGame = games[_gameHash];
         require(newGame.player1 == address(0), "You can't overwrite a running game");
         require(newGame.player2 == address(0), "You can't overwrite a running game");
+        require(newGame.player2Deadline == 0, "You can't overwrite a running game");
 
-        uint timeoutBlock = block.number + gameTimeout;
+        uint player2Deadline = block.number + player2MaxBlock;
+        uint player1Deadline = player2Deadline + player1MaxBlock;
 
         newGame.price = msg.value;
         newGame.move1Hash = move1Hash;
         newGame.player1 = msg.sender;
         newGame.player2 = player2;
-        newGame.timeoutBlock = timeoutBlock;
+        newGame.player1Deadline = player1Deadline;
+        newGame.player2Deadline = player2Deadline;
 
         emit LogGameCreated(
             _gameHash,
             msg.sender,
             player2,
             msg.value,
-            timeoutBlock
+            player1Deadline,
+            player2Deadline
         );
 
         return true;
@@ -87,16 +93,25 @@ contract RockPaperScissors {
         uint move2
     ) public payable returns (bool) {
         require(Move(move2) != Move.NONE, "move2 is required");
-        require(!timeoutExpired(_gameHash), "The game is required not expired");
 
         Game storage joinedGame = games[_gameHash];
         address player1 = joinedGame.player1;
         address player2 = joinedGame.player2;
 
-        require(msg.value == joinedGame.price, "msg.value is required equal to game price");
+        require(
+            msg.value == joinedGame.price,
+            "msg.value is required equal to game price"
+        );
         require(player1 != address(0), "player1 address is required");
         require(player2 == msg.sender, "player2 should be equal to sender");
-        require(joinedGame.move2 == Move.NONE, "The player2 move should be equal to NONE");
+        require(
+            joinedGame.move2 == Move.NONE,
+            "The player2 move should be equal to NONE"
+        );
+        require(
+            block.number <= joinedGame.player2Deadline,
+            "The player2 should play during the deadline limit"
+        );
 
         joinedGame.move2 = Move(move2);
 
@@ -112,7 +127,6 @@ contract RockPaperScissors {
     ) public returns (uint winnerId) {
         require(_gameHash != 0, "The game hash is required");
         require(Move(move1) != Move.NONE, "The move1 is required");
-        require(!timeoutExpired(_gameHash), "The game is required not expired");
 
         Game storage game = games[_gameHash];
         address player1 = game.player1;
@@ -125,6 +139,10 @@ contract RockPaperScissors {
         require(
             game.move1Hash == hash(msg.sender, move1, secret1),
             "The move1Hash requied equal to hash result"
+        );
+        require(
+            block.number <= game.player1Deadline,
+            "The player1 should reveal the game result during the deadline limit"
         );
 
         game.move1 = Move(move1);
@@ -179,13 +197,8 @@ contract RockPaperScissors {
         }
     }
 
-    function timeoutExpired(bytes32 _gameHash) public view returns (bool) {
-        return block.number > games[_gameHash].timeoutBlock;
-    }
-
     function claimRefund(bytes32 _gameHash) public returns (uint winnerId) {
         require(_gameHash != 0, "The game hash is required");
-        require(timeoutExpired(_gameHash), "The game deadline should be expired");
 
         Game storage game = games[_gameHash];
         address player1 = game.player1;
@@ -194,6 +207,10 @@ contract RockPaperScissors {
         require(
             player1 != address(0) && player2 != address(0),
             "player address is required"
+        );
+        require(
+            block.number > game.player1Deadline,
+            "The game deadline should be expired"
         );
 
         winnerId = getWinner(game);
