@@ -65,6 +65,10 @@ contract RockPaperScissors {
         require(newGame.player1 == address(0), "You can't overwrite a running game");
         require(newGame.player2 == address(0), "You can't overwrite a running game");
         require(newGame.player2Deadline == 0, "You can't overwrite a running game");
+        require(player1MaxBlock > 0, "The max block should be more than 0");
+        require(player2MaxBlock > 0, "The max block should be more than 0");
+        require(player1MaxBlock <= 10, "The max block should be less or equal to 10");
+        require(player2MaxBlock <= 10, "The max block should be less or equal to 10");
 
         uint player2Deadline = block.number + player2MaxBlock;
         uint player1Deadline = player2Deadline + player1MaxBlock;
@@ -197,26 +201,40 @@ contract RockPaperScissors {
         }
     }
 
-    function claimRefund(bytes32 _gameHash) public returns (uint winnerId) {
+    function claimPlayer2Unplay(bytes32 _gameHash) public returns (bool) {
         require(_gameHash != 0, "The game hash is required");
 
         Game storage game = games[_gameHash];
-        address player1 = game.player1;
-        address player2 = game.player2;
-
         require(
-            player1 != address(0) && player2 != address(0),
-            "player address is required"
-        );
-        require(
-            block.number > game.player1Deadline,
-            "The game deadline should be expired"
+            game.player2Deadline < block.number,
+            "The block number should be more than player2Deadeline"
         );
 
-        winnerId = getWinner(game);
-        reward(game, winnerId);
+        uint price = game.price;
+        game.price = 0;
+        balances[game.player1] = balances[game.player1] + price;
 
-        return winnerId;
+        return true;
+    }
+
+    function claimPlayer1UnReveal(bytes32 _gameHash) public returns (bool) {
+        require(_gameHash != 0, "The game hash is required");
+
+        Game storage game = games[_gameHash];
+        require(
+            game.move1 == Move.NONE,
+            "The player1 unreveal the game"
+        );
+        require(
+            game.player1Deadline < block.number,
+            "The block number should be more than player1Deadline"
+        );
+
+        uint price = game.price;
+        game.price = 0;
+        balances[game.player2] = balances[game.player2] + (price * 2);
+
+        return true;
     }
 
     function withdraw() public returns (bool) {
