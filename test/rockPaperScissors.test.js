@@ -97,30 +97,6 @@ contract('RockPaperScissors', accounts => {
       );
     });
 
-    it('should fail player1MaxBlock more than 10', async () => {
-      const value = web3Utils.toWei('0.01', 'ether');
-      const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
-        from: alice
-      });
-      const gameHash = await web3Utils.sha3('game_hash');
-
-      await expectedException(() =>
-        rps.startGame(gameHash, move1Hash, bob, 11, PLAYER2_MAX_BLOCK, { from: alice, value })
-      );
-    });
-
-    it('should fail player2MaxBlock more than 10', async () => {
-      const value = web3Utils.toWei('0.01', 'ether');
-      const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {
-        from: alice
-      });
-      const gameHash = await web3Utils.sha3('game_hash');
-
-      await expectedException(() =>
-        rps.startGame(gameHash, move1Hash, bob, PLAYER1_MAX_BLOCK, 11, { from: alice, value })
-      );
-    });
-
     it('should start the game', async () => {
       const value = web3Utils.toWei('0.01', 'ether');
       const move1Hash = await rps.hash(alice, MOVE.ROCK, aliceSecret, {

@@ -67,8 +67,6 @@ contract RockPaperScissors {
         require(newGame.player2Deadline == 0, "You can't overwrite a running game");
         require(player1MaxBlock > 0, "The max block should be more than 0");
         require(player2MaxBlock > 0, "The max block should be more than 0");
-        require(player1MaxBlock <= 10, "The max block should be less or equal to 10");
-        require(player2MaxBlock <= 10, "The max block should be less or equal to 10");
 
         uint player2Deadline = block.number + player2MaxBlock;
         uint player1Deadline = player2Deadline + player1MaxBlock;
