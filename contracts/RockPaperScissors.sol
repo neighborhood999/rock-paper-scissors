@@ -190,10 +190,8 @@ contract RockPaperScissors {
             balances[player2] = balances[player2] + price;
         } else if (winner == 1) {
             balances[player1] = balances[player1] + (price * 2);
-            balances[player2] = 0;
         } else if (winner == 2) {
             balances[player2] = balances[player2] + (price * 2);
-            balances[player1] = 0;
         } else {
             revert("winner id is invalid");
         }
