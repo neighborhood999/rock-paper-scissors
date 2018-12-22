@@ -206,7 +206,7 @@ contract RockPaperScissors {
             "The block number should be more than player2Deadeline"
         );
 
-        uint price = game.price;
+        uint256 price = game.price;
         game.price = 0;
         balances[game.player1] = balances[game.player1] + price;
 
@@ -226,7 +226,7 @@ contract RockPaperScissors {
             "The block number should be more than player1Deadline"
         );
 
-        uint price = game.price;
+        uint256 price = game.price;
         game.price = 0;
         balances[game.player2] = balances[game.player2] + (price * 2);
 
