@@ -201,6 +201,7 @@ contract RockPaperScissors {
         require(_gameHash != 0, "The game hash is required");
 
         Game storage game = games[_gameHash];
+        require(game.player1 == msg.sender, "The msg.sender should be player1");
         require(
             game.move2 == Move.NONE,
             "The player2 un play the game"
@@ -221,6 +222,7 @@ contract RockPaperScissors {
         require(_gameHash != 0, "The game hash is required");
 
         Game storage game = games[_gameHash];
+        require(game.player2 == msg.sender, "The msg.sender should be player2");
         require(
             game.move1 == Move.NONE,
             "The player1 unreveal the game"
