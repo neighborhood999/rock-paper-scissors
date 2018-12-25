@@ -202,6 +202,10 @@ contract RockPaperScissors {
 
         Game storage game = games[_gameHash];
         require(
+            game.move2 == Move.NONE,
+            "The player2 un play the game"
+        );
+        require(
             game.player2Deadline < block.number,
             "The block number should be more than player2Deadeline"
         );
