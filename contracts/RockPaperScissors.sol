@@ -201,7 +201,6 @@ contract RockPaperScissors {
         require(_gameHash != 0, "The game hash is required");
 
         Game storage game = games[_gameHash];
-        require(game.player1 == msg.sender, "The msg.sender should be player1");
         require(
             game.move2 == Move.NONE,
             "The player2 un play the game"
@@ -222,7 +221,9 @@ contract RockPaperScissors {
         require(_gameHash != 0, "The game hash is required");
 
         Game storage game = games[_gameHash];
-        require(game.player2 == msg.sender, "The msg.sender should be player2");
+
+        require(game.player1 != game.player2, "The player address is invalid");
+        require(game.move2 != Move.NONE, "The player2 move is required");
         require(
             game.move1 == Move.NONE,
             "The player1 unreveal the game"
@@ -232,9 +233,9 @@ contract RockPaperScissors {
             "The block number should be more than player1Deadline"
         );
 
-        uint256 price = game.price;
+        uint winnerId = getWinner(game);
+        reward(game, winnerId);
         game.price = 0;
-        balances[game.player2] = balances[game.player2] + (price * 2);
 
         return true;
     }
