@@ -232,6 +232,16 @@ contract RockPaperScissors {
         return true;
     }
 
+    function resetGame(Game storage game) private {
+        game.player1 = address(0);
+        game.player2 = address(0);
+        game.move1Hash = bytes32(0);
+        game.player1Deadline = 0;
+        game.player2Deadline = 0;
+        game.move1 = Move.NONE;
+        game.move2 = Move.NONE;
+    }
+
     function withdraw() public returns (bool) {
         uint256 amount = balances[msg.sender];
         require(amount > 0, "Nothing to withdraw, amount equals 0");
