@@ -147,9 +147,20 @@ contract RockPaperScissors {
             "The player1 should reveal the game result during the deadline limit"
         );
 
+        uint256 price = game.price;
         game.move1 = Move(move1);
         winnerId = getWinner(game);
-        reward(game, winnerId);
+
+        if (winnerId == 0) {
+            balances[player1] = balances[player1] + price;
+            balances[player2] = balances[player2] + price;
+        } else if (winnerId == 1) {
+            balances[player1] = balances[player1] + (price * 2);
+        } else if (winnerId == 2) {
+            balances[player2] = balances[player2] + (price * 2);
+        } else {
+            revert("winner id is invalid");
+        }
 
         emit LogGameResult(
             player1,
@@ -180,23 +191,6 @@ contract RockPaperScissors {
         return move1 > move2 ? 1 : 2;
     }
 
-    function reward(Game storage game, uint winner) private {
-        address player1 = game.player1;
-        address player2 = game.player2;
-        uint256 price = game.price;
-
-        if (winner == 0) {
-            balances[player1] = balances[player1] + price;
-            balances[player2] = balances[player2] + price;
-        } else if (winner == 1) {
-            balances[player1] = balances[player1] + (price * 2);
-        } else if (winner == 2) {
-            balances[player2] = balances[player2] + (price * 2);
-        } else {
-            revert("winner id is invalid");
-        }
-    }
-
     function claimPlayer2Unplay(bytes32 _gameHash) public returns (bool) {
         require(_gameHash != 0, "The game hash is required");
 
@@ -221,8 +215,6 @@ contract RockPaperScissors {
         require(_gameHash != 0, "The game hash is required");
 
         Game storage game = games[_gameHash];
-
-        require(game.player1 != game.player2, "The player address is invalid");
         require(game.move2 != Move.NONE, "The player2 move is required");
         require(
             game.move1 == Move.NONE,
@@ -233,9 +225,9 @@ contract RockPaperScissors {
             "The block number should be more than player1Deadline"
         );
 
-        uint winnerId = getWinner(game);
-        reward(game, winnerId);
+        uint256 price = game.price;
         game.price = 0;
+        balances[game.player2] = balances[game.player2] + (price * 2);
 
         return true;
     }
