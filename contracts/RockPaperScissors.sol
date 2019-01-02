@@ -1,6 +1,10 @@
 pragma solidity ^0.4.24;
 
+import "./SafeMath.sol";
+
 contract RockPaperScissors {
+    using SafeMath for uint256;
+
     enum Move { NONE, ROCK, PAPER, SCISSORS }
 
     struct Game {
@@ -152,12 +156,12 @@ contract RockPaperScissors {
         winnerId = getWinner(game);
 
         if (winnerId == 0) {
-            balances[player1] = balances[player1] + price;
-            balances[player2] = balances[player2] + price;
+            balances[player1] = balances[player1].add(price);
+            balances[player2] = balances[player2].add(price);
         } else if (winnerId == 1) {
-            balances[player1] = balances[player1] + (price * 2);
+            balances[player1] = balances[player1] + price.mul(2);
         } else if (winnerId == 2) {
-            balances[player2] = balances[player2] + (price * 2);
+            balances[player2] = balances[player2] + price.mul(2);
         } else {
             revert("winner id is invalid");
         }
@@ -206,7 +210,7 @@ contract RockPaperScissors {
 
         uint256 price = game.price;
         game.price = 0;
-        balances[game.player1] = balances[game.player1] + price;
+        balances[game.player1] = balances[game.player1].add(price);
 
         return true;
     }
@@ -227,7 +231,7 @@ contract RockPaperScissors {
 
         uint256 price = game.price;
         game.price = 0;
-        balances[game.player2] = balances[game.player2] + (price * 2);
+        balances[game.player2] = balances[game.player2] + price.mul(2);
 
         return true;
     }
