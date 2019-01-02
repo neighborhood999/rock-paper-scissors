@@ -166,6 +166,8 @@ contract RockPaperScissors {
             revert("winner id is invalid");
         }
 
+        resetGame(game);
+
         emit LogGameResult(
             player1,
             player2,
