@@ -159,9 +159,9 @@ contract RockPaperScissors {
             balances[player1] = balances[player1].add(price);
             balances[player2] = balances[player2].add(price);
         } else if (winnerId == 1) {
-            balances[player1] = balances[player1] + price.mul(2);
+            balances[player1] = balances[player1].add(price.mul(2));
         } else if (winnerId == 2) {
-            balances[player2] = balances[player2] + price.mul(2);
+            balances[player2] = balances[player2].add(price.mul(2));
         } else {
             revert("winner id is invalid");
         }
@@ -233,7 +233,7 @@ contract RockPaperScissors {
 
         uint256 price = game.price;
         game.price = 0;
-        balances[game.player2] = balances[game.player2] + price.mul(2);
+        balances[game.player2] = balances[game.player2].add(price.mul(2));
 
         return true;
     }
