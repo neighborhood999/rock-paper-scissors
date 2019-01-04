@@ -213,6 +213,7 @@ contract RockPaperScissors {
         uint256 price = game.price;
         game.price = 0;
         balances[game.player1] = balances[game.player1].add(price);
+        resetGame(game);
 
         return true;
     }
@@ -234,6 +235,7 @@ contract RockPaperScissors {
         uint256 price = game.price;
         game.price = 0;
         balances[game.player2] = balances[game.player2].add(price.mul(2));
+        resetGame(game);
 
         return true;
     }
