@@ -50,6 +50,10 @@ contract RockPaperScissors {
         uint move,
         bytes32 secret
     ) public view returns(bytes32) {
+        require(sender != address(0), "The sender address is required");
+        require(move <= uint(Move.SCISSORS), "The 'move' should be ROCK or PAPER, SCISSORS");
+        require(secret != bytes32(0), "The secret is required");
+
         return keccak256(abi.encodePacked(this, sender, move, secret));
     }
 
@@ -66,9 +70,7 @@ contract RockPaperScissors {
         require(msg.value != 0, "Game cannot be played for free");
 
         Game storage newGame = games[_gameHash];
-        require(newGame.player1 == address(0), "You can't overwrite a running game");
         require(newGame.player2 == address(0), "You can't overwrite a running game");
-        require(newGame.player2Deadline == 0, "You can't overwrite a running game");
         require(player1MaxBlock > 0, "The max block should be more than 0");
         require(player2MaxBlock > 0, "The max block should be more than 0");
 
@@ -104,15 +106,11 @@ contract RockPaperScissors {
         address player1 = joinedGame.player1;
         address player2 = joinedGame.player2;
 
-        require(
-            msg.value == joinedGame.price,
-            "msg.value is required equal to game price"
-        );
         require(player1 != address(0), "player1 address is required");
         require(player2 == msg.sender, "player2 should be equal to sender");
         require(
             joinedGame.move2 == Move.NONE,
-            "The player2 move should be equal to NONE"
+            "The player2 should not have played yet"
         );
         require(
             block.number <= joinedGame.player2Deadline,
@@ -166,8 +164,6 @@ contract RockPaperScissors {
             revert("winner id is invalid");
         }
 
-        resetGame(game);
-
         emit LogGameResult(
             player1,
             player2,
@@ -176,6 +172,8 @@ contract RockPaperScissors {
             game.move2,
             winnerId
         );
+
+        resetGame(game);
 
         return winnerId;
     }
