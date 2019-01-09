@@ -51,7 +51,8 @@ contract RockPaperScissors {
         bytes32 secret
     ) public view returns(bytes32) {
         require(sender != address(0), "The sender address is required");
-        require(move <= uint(Move.SCISSORS), "The 'move' should be ROCK or PAPER, SCISSORS");
+        require(Move(move) != Move.NONE, "The 'move' is required");
+        require(Move(move) <= Move.SCISSORS, "The 'move' should be ROCK or PAPER, SCISSORS");
         require(secret != bytes32(0), "The secret is required");
 
         return keccak256(abi.encodePacked(this, sender, move, secret));
