@@ -14,7 +14,6 @@ contract RockPaperScissors {
         bytes32 move1Hash;
         uint player1Deadline;
         uint player2Deadline;
-        Move move1;
         Move move2;
     }
 
@@ -39,7 +38,6 @@ contract RockPaperScissors {
         address indexed player1,
         address indexed player2,
         bytes32 indexed gameHash,
-        Move move1,
         Move move2,
         uint winnerId
     );
@@ -59,18 +57,16 @@ contract RockPaperScissors {
     }
 
     function startGame(
-        bytes32 _gameHash,
         bytes32 move1Hash,
         address player2,
         uint player1MaxBlock,
         uint player2MaxBlock
     ) public payable returns (bool) {
-        require(_gameHash != 0, "Game hash is required");
         require(move1Hash != 0, "Move 1 hash is required");
         require(player2 != address(0), "Player2 address is required");
         require(msg.value != 0, "Game cannot be played for free");
 
-        Game storage newGame = games[_gameHash];
+        Game storage newGame = games[move1Hash];
         require(newGame.player2 == address(0), "You can't overwrite a running game");
         require(player1MaxBlock > 0, "The max block should be more than 0");
         require(player2MaxBlock > 0, "The max block should be more than 0");
@@ -86,7 +82,7 @@ contract RockPaperScissors {
         newGame.player2Deadline = player2Deadline;
 
         emit LogGameCreated(
-            _gameHash,
+            move1Hash,
             msg.sender,
             player2,
             msg.value,
@@ -98,12 +94,13 @@ contract RockPaperScissors {
     }
 
     function joinGame(
-        bytes32 _gameHash,
+        bytes32 move1Hash,
         uint move2
     ) public payable returns (bool) {
+        require(move1Hash != 0, "The game hash is required");
         require(Move(move2) != Move.NONE, "move2 is required");
 
-        Game storage joinedGame = games[_gameHash];
+        Game storage joinedGame = games[move1Hash];
         address player1 = joinedGame.player1;
         address player2 = joinedGame.player2;
 
@@ -120,7 +117,7 @@ contract RockPaperScissors {
 
         joinedGame.move2 = Move(move2);
 
-        emit LogGameJoined(player1, msg.sender, _gameHash, move2);
+        emit LogGameJoined(player1, msg.sender, move1Hash, move2);
 
         return true;
     }
@@ -137,10 +134,7 @@ contract RockPaperScissors {
         address player1 = game.player1;
         address player2 = game.player2;
 
-        require(
-            game.move1 == Move.NONE && game.move2 != Move.NONE,
-            "The move is invalid"
-        );
+        require(game.move2 != Move.NONE, "The move2 is invalid");
         require(
             game.move1Hash == hash(msg.sender, move1, secret1),
             "The move1Hash requied equal to hash result"
@@ -151,8 +145,7 @@ contract RockPaperScissors {
         );
 
         uint256 price = game.price;
-        game.move1 = Move(move1);
-        winnerId = getWinner(game);
+        winnerId = getWinner(game, Move(move1));
 
         if (winnerId == 0) {
             balances[player1] = balances[player1].add(price);
@@ -169,7 +162,6 @@ contract RockPaperScissors {
             player1,
             player2,
             _gameHash,
-            game.move1,
             game.move2,
             winnerId
         );
@@ -179,8 +171,7 @@ contract RockPaperScissors {
         return winnerId;
     }
 
-    function getWinner(Game storage game) private view returns (uint) {
-        Move move1 = game.move1;
+    function getWinner(Game storage game, Move move1) private view returns (uint) {
         Move move2 = game.move2;
 
         if (move1 == move2) {
@@ -196,8 +187,15 @@ contract RockPaperScissors {
         return move1 > move2 ? 1 : 2;
     }
 
-    function claimPlayer2Unplay(bytes32 _gameHash) public returns (bool) {
-        require(_gameHash != 0, "The game hash is required");
+    function claimPlayer2Unplay(
+        bytes32 _gameHash,
+        uint move1,
+        bytes32 secret1
+    ) public returns (bool) {
+        require(
+            _gameHash == hash(msg.sender, move1, secret1),
+            "The game hash requied equal to hash result"
+        );
 
         Game storage game = games[_gameHash];
         require(
@@ -217,13 +215,20 @@ contract RockPaperScissors {
         return true;
     }
 
-    function claimPlayer1UnReveal(bytes32 _gameHash) public returns (bool) {
-        require(_gameHash != 0, "The game hash is required");
+    function claimPlayer1UnReveal(
+        bytes32 _gameHash,
+        uint move1,
+        bytes32 secret1
+    ) public returns (bool) {
+        require(
+            _gameHash == hash(msg.sender, move1, secret1),
+            "The game hash requied equal to hash result"
+        );
 
         Game storage game = games[_gameHash];
         require(game.move2 != Move.NONE, "The player2 move is required");
         require(
-            game.move1 == Move.NONE,
+            Move(move1) == Move.NONE,
             "The player1 unreveal the game"
         );
         require(
@@ -245,7 +250,6 @@ contract RockPaperScissors {
         game.move1Hash = bytes32(0);
         game.player1Deadline = 0;
         game.player2Deadline = 0;
-        game.move1 = Move.NONE;
         game.move2 = Move.NONE;
     }
 
