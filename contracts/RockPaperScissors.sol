@@ -64,7 +64,7 @@ contract RockPaperScissors {
     ) public payable returns (bool) {
         require(move1Hash != 0, "Move 1 hash is required");
         require(player2 != address(0), "Player2 address is required");
-        require(msg.value != 0, "Game cannot be played for free");
+        require(msg.value != 0, "Game can not be played for free");
 
         Game storage newGame = games[move1Hash];
         require(newGame.player2 == address(0), "You can't overwrite a running game");
@@ -97,6 +97,7 @@ contract RockPaperScissors {
         bytes32 move1Hash,
         uint move2
     ) public payable returns (bool) {
+        require(msg.value > 0, "Game can not be played for free");
         require(Move(move2) != Move.NONE, "move2 is required");
 
         Game storage joinedGame = games[move1Hash];
@@ -187,9 +188,8 @@ contract RockPaperScissors {
     }
 
     function claimPlayer2Unplay(bytes32 move1Hash) public returns (bool) {
-        require(move1Hash != 0, "The move1 hash is required");
-
         Game storage game = games[move1Hash];
+        require(game.price > 0, "The game price should be more than 0");
         require(
             game.move2 == Move.NONE,
             "The player2 un play the game"
@@ -208,9 +208,8 @@ contract RockPaperScissors {
     }
 
     function claimPlayer1UnReveal(bytes32 move1Hash) public returns (bool) {
-        require(move1Hash != 0, "The move1 hash is required");
-
         Game storage game = games[move1Hash];
+        require(game.price > 0, "The game price should be more than 0");
         require(game.move2 != Move.NONE, "The player2 move is required");
         require(
             game.player1Deadline < block.number,
